@@ -1,0 +1,12 @@
+---
+- hosts: aws
+  vars_files:
+      - /home/nelbo/code/qxf2/terraform/pto-ansible/pto-cre.yml
+  vars:
+      - username: ubuntu
+      - destdir: /home/{{username}}/qxf2-lambdas
+      - requirement: /home/{{username}}/qxf2-lambdas/pto_detector/requirements.txt
+      - env: /home/{{username}}/qxf2-lambdas/pto_detector/venv-pto-detector
+      - app_name: ptodetector
+  roles:
+      - role: '/home/nelbo/code/qxf2/terraform/pto-ansible/roles/pto'
