@@ -22,7 +22,7 @@ variable "ispto_service_ec2_inst_type" {
 variable "is_pto_service_key_pair" {
     description = "defining the PEM key file name to ssh into ec2 instance"
     type = string
-    default = "isptoservice.pem"
+    default = "isptoservice"
 }
 
 
