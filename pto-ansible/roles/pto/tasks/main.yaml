@@ -17,7 +17,7 @@
     register: dir
   - name: Clone the repository if the directory doesn't exist in the machine
     git:
-      repo: "https://{{gituser}}:{{gitpass}}@github.com/qxf2/qxf2-lambdas.git"
+      repo: "https://github.com/qxf2/qxf2-lambdas.git"
       dest: "{{destdir}}"
     when: dir.stat.exists == false
   - name: Pull from the repository on github if the directory exists 
@@ -27,7 +27,7 @@
     when: dir.stat.exists == true
   - name: Install necessary packages
     apt:
-      name: ['python3-pip','python3-dev','build-essential','libssl-dev','python3-setuptools','python3-venv','nginx','virtualenv','python3-dotenv']
+      name: ['python3-pip','python3-dev','build-essential','libssl-dev','python3-setuptools','python3-venv','nginx']
       state: latest
     become: true
     become_user: root
@@ -43,30 +43,30 @@
       virtualenv: "{{env}}"
       chdir: "{{destdir}}"
       state: latest
-  - name: Create .flaskenv file
+  - name: Setting Up a Flask Application
     file:
-      path: "{{destdir}}/.flaskenv"
-      state: touch
-      mode: 0755
-  - name: Update file .flaskenv
-    copy:
-      src: ".flaskenv"
-      dest: "{{destdir}}/.flaskenv"
-      remote_src: no
-  - name: Create flask sample file
-    file:
-      path: "{{destdir}}/pto_detector/pto-sample.py"
+      path: "{{destdir}}/pto_detector/ptodetector.py"
       state: touch
       mode: 0755
   - name: update flask sample code file
     copy:
-      src: "pto-sample.py"
-      dest: "{{destdir}}/pto_detector/pto-sample.py"
+      src: "ptodetector.py"
+      dest: "{{destdir}}/pto_detector/ptodetector.py"
       remote_src: no
-  - name: Write to file main.ini
+  - name: Creating the WSGI Entry Point
+    file:
+      path: "{{destdir}}/pto_detector/wsgi.py"
+      state: touch
+      mode: 0755
+  - name: Update file wsgi.py
+    copy:
+      src: "wsgi.py"
+      dest: "{{destdir}}/pto_detector/wsgi.py"
+      remote_src: no
+  - name: Creating a uWSGI Configuration File
     template:
-      src: "main.ini.j2"
-      dest: "{{destdir}}/pto_detector/main.ini"
+      src: "ptodetector.ini.j2"
+      dest: "{{destdir}}/pto_detector/ptodetector.ini"
       force: no
   - name: Create a systemd unit file
     copy:
@@ -74,9 +74,9 @@
       dest: "/etc/systemd/system/{{app_name}}.service"
       remote_src: no
       force: no
+    notify: start and enable service ptodetector
     become: true
     become_user: root
-    notify: start and enable service ptodetector
   - name: Configuring nginx to proxy requests
     template:
       src: "nginx.j2"
@@ -98,7 +98,7 @@
       force: yes
     become: true
     become_user: root
-    notify: restart nginx service
+    notify: Restart nginx service
   - name: Allow all incoming http
     iptables:
       chain: INPUT

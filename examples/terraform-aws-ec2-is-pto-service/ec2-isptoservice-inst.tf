@@ -5,7 +5,7 @@ resource "aws_instance" "myec2instace" {
     #user_data = file("${path.module}/ptoinstall.sh")
     key_name = var.is_pto_service_key_pair
     vpc_security_group_ids = [aws_security_group.pto-ssh.id]
-    count = 2
+    count = 1
     tags = {
         "Name"  : "PTO-EC2ins-${count.index}"
     }
