@@ -10,3 +10,4 @@
       - app_name: ptodetector
   roles:
       - role: '/home/nelbo/code/qxf2/terraform/pto-ansible/roles/pto'
+      - role: '/home/nelbo/code/qxf2/terraform/pto-ansible/roles/pto/handlers'
