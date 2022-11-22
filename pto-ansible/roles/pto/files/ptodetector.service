@@ -7,7 +7,7 @@ User=ubuntu
 Group=www-data
 WorkingDirectory=/home/ubuntu/qxf2-lambdas/pto_detector
 Environment="PATH=/home/ubuntu/qxf2-lambdas/pto_detector/venv-pto-detector/bin"
-ExecStart=/home/ubuntu/qxf2-lambdas/pto_detector/venv-pto-detector/bin/uwsgi --ini main.ini
+ExecStart=/home/ubuntu/qxf2-lambdas/pto_detector/venv-pto-detector/bin/uwsgi --ini ptodetector.ini
 
 [Install]
 WantedBy=multi-user.target

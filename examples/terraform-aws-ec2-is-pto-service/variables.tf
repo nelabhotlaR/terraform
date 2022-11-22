@@ -9,7 +9,7 @@ variable "region" {
 # using map declaring 3 different instance types for dev, test and prod.
 
 variable "ispto_service_ec2_inst_type" {
-    description = "deploying ec2 instance type for is-pto-service for dev, test and prod"
+    description = "declaring ec2 instance type for is-pto-service for dev, test and prod"
     type = map(string)
     default = {
       "dev" = "t3.micro"
