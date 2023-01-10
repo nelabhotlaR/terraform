@@ -5,9 +5,9 @@ After=network.target
 [Service]
 User=ubuntu
 Group=www-data
-WorkingDirectory=/home/ubuntu/qxf2-lambdas/pto_detector
-Environment="PATH=/home/ubuntu/qxf2-lambdas/pto_detector/venv-pto-detector/bin"
-ExecStart=/home/ubuntu/qxf2-lambdas/pto_detector/venv-pto-detector/bin/uwsgi --ini ptodetector.ini
+WorkingDirectory=/home/ubuntu/practice-testing-ai-ml
+Environment="PATH=/home/ubuntu/practice-testing-ai-ml/venv-pto-detector/bin"
+ExecStart=/home/ubuntu/practice-testing-ai-ml/venv-pto-detector/bin/uwsgi --ini aiml.ini
 
 [Install]
 WantedBy=multi-user.target

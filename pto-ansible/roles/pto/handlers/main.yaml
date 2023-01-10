@@ -17,7 +17,7 @@
     register: dir
   - name: Clone the repository if the directory doesn't exist in the machine
     git:
-      repo: "https://github.com/qxf2/qxf2-lambdas.git"
+      repo: "https://github.com/qxf2/practice-testing-ai-ml.git"
       dest: "{{destdir}}"
     when: dir.stat.exists == false
   - name: Pull from the repository on github if the directory exists 
@@ -33,7 +33,7 @@
     become_user: root
   - name: Install flask and uwsgi with pip in the virtual environment
     pip:
-      name: ['uwsgi', 'flask']
+      name: ['uwsgi']
       virtualenv: "{{env}}"
       chdir: "{{destdir}}"
       virtualenv_command: python3 -m venv venv-pto-detector
@@ -43,31 +43,7 @@
       virtualenv: "{{env}}"
       chdir: "{{destdir}}"
       state: latest
-  - name: Setting Up a Flask Application
-    file:
-      path: "{{destdir}}/pto_detector/ptodetector.py"
-      state: touch
-      mode: 0755
-  - name: update flask sample code file to remote server
-    copy:
-      src: "ptodetector.py"
-      dest: "{{destdir}}/pto_detector/ptodetector.py"
-      remote_src: no
-  - name: Creating the WSGI Entry Point
-    file:
-      path: "{{destdir}}/pto_detector/wsgi.py"
-      state: touch
-      mode: 0755
-  - name: Update file wsgi.py to remote server
-    copy:
-      src: "wsgi.py"
-      dest: "{{destdir}}/pto_detector/wsgi.py"
-      remote_src: no
-  - name: Creating a uWSGI Configuration File
-    template:
-      src: "ptodetector.ini.j2"
-      dest: "{{destdir}}/pto_detector/ptodetector.ini"
-      force: yes
+
   - name: Create a systemd unit file
     become: true
     become_user: root
