@@ -20,7 +20,7 @@
       repo: "https://github.com/qxf2/practice-testing-ai-ml.git"
       dest: "{{destdir}}"
       single_branch: yes
-      version: rag-requirement-package-correction
+      version: main
     when: dir.stat.exists == false
   - name: Pull from the repository on github if the directory exists 
     shell:
@@ -45,7 +45,8 @@
       virtualenv: "{{env}}"
       chdir: "{{destdir}}"
       state: latest
-
+  - name: Get the "Stopwords" nltk corpus
+    shell: /home/ubuntu/practice-testing-ai-ml/venv-pto-detector/bin/python3 -c "import nltk; nltk.download('stopwords')"  
   - name: Create a systemd unit file
     become: true
     become_user: root
