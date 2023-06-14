@@ -13,9 +13,9 @@ resource "aws_instance" "myec2memegeninstance" {
 resource "local_file" "ip" {
     filename = "meme-gen.txt"
     content = <<-EOT
-        %{for ip in aws_instance.myec2memegeninstance.*.public_ip ~}
-        ${ip}
-        %{endfor ~}
+    %{for ip in aws_instance.myec2memegeninstance.*.public_ip ~}
+    ${ip}
+    %{endfor ~}
     EOT
 }
 
@@ -35,3 +35,5 @@ provisioner "file" {
     destination = "/home/ubuntu/meme-generator/ip.txt"
        }
 }
+
+#https://www.linkedin.com/pulse/integration-terraform-ansible-create-your-own-dynamic-abhinav-paul/
