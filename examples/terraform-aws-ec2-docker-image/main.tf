@@ -12,16 +12,15 @@ resource "aws_instance" "docker_instance" {
     volume_size = 8
     volume_type = "gp2"
   }
-  provisioner "file" {
-    source      = "bootstrap.sh"
-    destination = "/home/ubuntu/bootstrap.sh"
+   provisioner "file" {
+    source      = "nginx_config.template"
+    destination = "/home/ubuntu/default"
     connection {
       host        = aws_instance.docker_instance.public_ip
       user        = "ubuntu"
       private_key = file("/home/nelbo/code/qxf2/terraform/examples/terraform-aws-ec2-docker-image/isptoservice.pem")
     }
   }
-
   user_data = <<-EOF
     #!/bin/bash
     sudo apt-get update -y
@@ -37,8 +36,8 @@ resource "aws_instance" "docker_instance" {
     
     # Install Docker
     sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-    
-    sudo mkfs -t xfs /dev/nvme1n1
+   
+    sudo mkfs -t ext4 /dev/nvme1n1
     sudo mkdir /data
     sudo mount /dev/nvme1n1 /data
     
@@ -51,16 +50,34 @@ resource "aws_instance" "docker_instance" {
 
     # Download Docker image
     sudo docker pull qxf2rohand/newsletter_automation:latest  # Replace with your Docker image name
-    
+    echo "sleeping time to give time to download docker before docker start"
+    sleep 2m
     # Run Docker container
-    sudo docker run -it -p 5000:5000 newsletter_automation  # Replace with your Docker image name
+    sudo docker run -it -p 5000:5000 qxf2rohand/newsletter_automation  # run Docker image
+   
   EOF
+  provisioner "remote-exec" {
+    connection {
+      host        = aws_instance.docker_instance.public_ip
+      user        = "ubuntu"
+      private_key = file("/home/nelbo/code/qxf2/terraform/examples/terraform-aws-ec2-docker-image/isptoservice.pem")
+    }
+    inline = [ 
+     # nginx installation
+      "sudo apt install nginx -y",
+      "cd /home/ubuntu",
+      "echo going to copy file",
+      "sudo cp /home/ubuntu/default /etc/nginx/sites-available/",
+      "sudo nginx -t",
+      "sudo systemctl restart nginx"
+    ]
+  }
 }
 
 # Create an EBS volume
 resource "aws_ebs_volume" "extra_volume" {
   availability_zone = aws_instance.docker_instance.availability_zone # availability zone
-  size              = 30          # volume size (in GB)
+  size              = 20          # volume size (in GB)
   tags = {
     Name = "newsletter"
   }
@@ -73,6 +90,8 @@ resource "aws_volume_attachment" "attachment" {
   instance_id = aws_instance.docker_instance.id
   force_detach = true
 }
+
+
 # https://www.baeldung.com/linux/docker-fix-no-space-error
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/step4-extend-file-system.html
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html
