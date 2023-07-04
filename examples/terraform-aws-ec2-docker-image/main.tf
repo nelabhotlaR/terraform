@@ -12,14 +12,23 @@ resource "aws_instance" "docker_instance" {
     volume_size = 8
     volume_type = "gp2"
   }
-   provisioner "file" {
-    source      = "nginx_config.template"
-    destination = "/home/ubuntu/default"
+  provisioner "remote-exec" {
     connection {
       host        = aws_instance.docker_instance.public_ip
       user        = "ubuntu"
-      private_key = file("/home/nelbo/code/qxf2/terraform/examples/terraform-aws-ec2-docker-image/isptoservice.pem")
+      private_key = file(var.private_key_path)
     }
+    inline = [ 
+     # nginx installation
+      "sudo apt install nginx -y",
+      "sudo apt-get install -y git",
+      "cd /home/ubuntu",
+      "echo going to copy file",
+      "git clone https://github.com/nelabhotlaR/nginx-config-file.git",
+      "sudo mv ~/nginx-config-file/nginx_config.template /etc/nginx/sites-available/default",
+      "sudo nginx -t",
+      "sudo systemctl restart nginx"
+    ]
   }
   user_data = <<-EOF
     #!/bin/bash
@@ -50,34 +59,15 @@ resource "aws_instance" "docker_instance" {
 
     # Download Docker image
     sudo docker pull qxf2rohand/newsletter_automation:latest  # Replace with your Docker image name
-    echo "sleeping time to give time to download docker before docker start"
-    sleep 2m
     # Run Docker container
-    sudo docker run -it -p 5000:5000 qxf2rohand/newsletter_automation  # run Docker image
-   
+    sudo docker run -it -p 5000:5000 qxf2rohand/newsletter_automation  # run Docker images
   EOF
-  provisioner "remote-exec" {
-    connection {
-      host        = aws_instance.docker_instance.public_ip
-      user        = "ubuntu"
-      private_key = file("/home/nelbo/code/qxf2/terraform/examples/terraform-aws-ec2-docker-image/isptoservice.pem")
-    }
-    inline = [ 
-     # nginx installation
-      "sudo apt install nginx -y",
-      "cd /home/ubuntu",
-      "echo going to copy file",
-      "sudo cp /home/ubuntu/default /etc/nginx/sites-available/",
-      "sudo nginx -t",
-      "sudo systemctl restart nginx"
-    ]
-  }
 }
 
 # Create an EBS volume
 resource "aws_ebs_volume" "extra_volume" {
   availability_zone = aws_instance.docker_instance.availability_zone # availability zone
-  size              = 20          # volume size (in GB)
+  size              = 30        # volume size (in GB)
   tags = {
     Name = "newsletter"
   }
@@ -91,6 +81,58 @@ resource "aws_volume_attachment" "attachment" {
   force_detach = true
 }
 
+# lambda function deployment
+
+data "archive_file" "zip" {
+  type = "zip"
+  source_dir = "${local.function_source_dir}"
+  output_path = "outputs/lambda_file.zip"
+}
+
+data "archive_file" "lambda_layer_zip" {
+  type = "zip"
+  source_dir = "${local.requirements_directory}"
+  output_path = "outputs/requirements.zip"  
+}
+
+resource "aws_iam_role" "lambda_role" {
+  name = var.lambda_role_name
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_lambda_layer_version" "lambda_layer" {
+  filename = "${data.archive_file.lambda_layer_zip.output_path}"
+  layer_name = "${var.lambda_layer_name}"
+  
+}
+
+resource "aws_lambda_function" "newsletter_lambda" {
+  filename         = "${data.archive_file.zip.output_path}"
+  #source_code_hash = "${data.archive_file.zip.output_base64sha256}"
+  function_name    = "${var.function_name}"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "${var.function_handler}"
+  runtime          = "python3.9"
+  layers           = [aws_lambda_layer_version.lambda_layer.arn]
+  tracing_config {
+    mode = "Active"
+  }
+  
+}
 
 # https://www.baeldung.com/linux/docker-fix-no-space-error
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/step4-extend-file-system.html
