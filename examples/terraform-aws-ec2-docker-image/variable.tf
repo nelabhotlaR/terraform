@@ -18,3 +18,38 @@ variable "is_newsletter_key_pair" {
     default = "isptoservice"
 }
 
+variable "profile" {
+    default = "default"
+    type = string
+  
+}
+# to declare private key path
+variable "private_key_path" {
+  type        = string
+  description = "Path to the PEM private key file"
+}
+#Lambda function related variables
+
+variable "function_name" {
+    type = string
+    default = "URLFilteringLambdaRohini" 
+}
+
+variable "function_handler" {
+    type = string
+    default = "url_filtering_lambda_rohini_lambda_handler"
+}
+
+variable "lambda_layer_name" {
+    type = string
+    default = "rohinilayer"  
+}
+variable "lambda_role_name" {
+  type    = string
+  default = "your-lambda-role"
+}
+
+locals{
+    function_source_dir  = "${path.module}/lambdas/URLFilteringLambdaRohini/"
+    requirements_directory = "${path.module}/lambdas/URLFilteringLambdaRohini/"
+}
