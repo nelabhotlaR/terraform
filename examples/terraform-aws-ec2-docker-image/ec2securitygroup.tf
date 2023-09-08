@@ -15,7 +15,7 @@ resource "aws_security_group" "docker_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
+
   # Add any additional ingress rules as needed
 
   egress {
@@ -24,7 +24,7 @@ resource "aws_security_group" "docker_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-   tags = {
+  tags = {
     Name = "docker-newsletter-image"
   }
 
