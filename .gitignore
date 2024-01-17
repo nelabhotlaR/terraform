@@ -5,7 +5,7 @@
 # .tfstate files
 *.tfstate
 *.tfstate.*
-
+*.pem
 *venv*
 
 # Crash log files

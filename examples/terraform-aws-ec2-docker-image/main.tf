@@ -6,12 +6,15 @@ resource "aws_instance" "docker_instance" {
   instance_type          = var.newsletter_ec2_inst_type
   key_name               = var.is_newsletter_key_pair #key pair name
   vpc_security_group_ids = [aws_security_group.docker_sg.id]
+  ebs_optimized          = true # Ensuring that EC2 instances are EBS-optimized will help to deliver enhanced performance for EBS workloads
+  monitoring             = true # Insights about the performance and utilization of your instances
   tags = {
-    "Name" : "docker-EC2instance"
+    "Name" : "Newsletter_automation"
   }
   root_block_device {
     volume_size = 30
     volume_type = "gp2"
+    encrypted   = true
   }
   # to install/start/enable docker
   provisioner "remote-exec" {
@@ -112,9 +115,13 @@ resource "aws_lambda_function" "newsletter_lambda" {
   runtime       = var.lambda_runtime
   timeout       = 60
   memory_size   = 128
-  filename      = "/tmp/lambda_code.zip"
-  role          = aws_iam_role.lambda_role.arn
-  layers        = [aws_lambda_layer_version.lambda_layer.arn]
+  dead_letter_config { # DLQ offers the possibility to investigate errors or failed requests to the connected Lambda function
+    target_arn = aws_sqs_queue.newsletter_sqs.arn
+  }
+  reserved_concurrent_executions = 100 # Adding concurrency limits can prevent a rapid spike in usage and costs
+  filename                       = "/tmp/lambda_code.zip"
+  role                           = aws_iam_role.lambda_role.arn
+  layers                         = [aws_lambda_layer_version.lambda_layer.arn]
   environment {
     variables = {
       CHATGPT_API_KEY        = "${var.CHATGPT_API_KEY}"
