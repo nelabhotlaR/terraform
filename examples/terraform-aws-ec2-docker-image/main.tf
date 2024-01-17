@@ -1,11 +1,11 @@
 
 # Create an EC2 instance with volume size 30gb. 
 
-resource "aws_instance" "docker_instance" {
+resource "aws_instance" "newsletter_instance" {
   ami                    = data.aws_ami.ubuntu.id # AMI ID
   instance_type          = var.newsletter_ec2_inst_type
   key_name               = var.is_newsletter_key_pair #key pair name
-  vpc_security_group_ids = [aws_security_group.docker_sg.id]
+  vpc_security_group_ids = [aws_security_group.newsletter_sg.id]
   ebs_optimized          = true # Ensuring that EC2 instances are EBS-optimized will help to deliver enhanced performance for EBS workloads
   monitoring             = true # Insights about the performance and utilization of your instances
   tags = {
@@ -19,7 +19,7 @@ resource "aws_instance" "docker_instance" {
   # to install/start/enable docker
   provisioner "remote-exec" {
     connection {
-      host        = aws_instance.docker_instance.public_ip
+      host        = aws_instance.newsletter_instance.public_ip
       user        = "ubuntu"
       private_key = file(var.private_key_path)
     }
@@ -35,24 +35,26 @@ resource "aws_instance" "docker_instance" {
       "sudo usermod -aG docker ubuntu"
     ]
   }
-  # to pull the docker image and run the docker image
+  # to prepare the docker image from newsletter_automation clone and run the docker image
   provisioner "remote-exec" {
     connection {
-      host        = aws_instance.docker_instance.public_ip
+      host        = aws_instance.newsletter_instance.public_ip
       user        = "ubuntu"
       private_key = file(var.private_key_path)
     }
     inline = [
-      # Download Docker image
-      "sudo docker pull qxf2rohand/newsletter_automation:latest",
-      # Run Docker container
-      "sudo docker run -it -d -p 5000:5000 qxf2rohand/newsletter_automation"
+      # clone the repo
+      "cd /tmp",
+      "git clone https://github.com/qxf2/newsletter_automation.git",
+      "cd newsletter_automation",
+      "docker build --tag newsletter_automation .",
+      "sudo docker run -it -d -p 5000:5000 newsletter_automation"
     ]
   }
   # to serve newsletter app nginx download and configuration
   provisioner "remote-exec" {
     connection {
-      host        = aws_instance.docker_instance.public_ip
+      host        = aws_instance.newsletter_instance.public_ip
       user        = "ubuntu"
       private_key = file(var.private_key_path)
     }
@@ -132,7 +134,7 @@ resource "aws_lambda_function" "newsletter_lambda" {
       ETC_CHANNEL            = "${var.ETC_CHANNEL}"
       Qxf2Bot_USER           = "${var.Qxf2Bot_USER}"
       SKYPE_SENDER_QUEUE_URL = aws_sqs_queue.newsletter_sqs.url
-      URL                    = format("%s%s", var.URLprefix, aws_instance.docker_instance.public_ip)
+      URL                    = format("%s%s", var.URLprefix, aws_instance.newsletter_instance.public_ip)
       DEFAULT_CATEGORY       = 5
     }
   }

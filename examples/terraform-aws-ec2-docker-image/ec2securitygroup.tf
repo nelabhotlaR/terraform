@@ -1,6 +1,6 @@
 # Create a security group
-resource "aws_security_group" "docker_sg" {
-  name        = "docker-sg"
+resource "aws_security_group" "newsletter_sg" {
+  name        = "Newsletter_Automation-sg"
   description = "Security group for Newsletter EC2 instance"
   ingress {
     from_port   = 22
