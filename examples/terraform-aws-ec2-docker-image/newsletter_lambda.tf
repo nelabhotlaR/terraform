@@ -4,10 +4,10 @@ resource "null_resource" "aws_lambda_repo_clone" {
   provisioner "local-exec" {
     command     = <<-EOT
     git clone ${var.github_repo}
-    pip3 install -r /tmp/qxf2-lambdas/${var.github_repo_name}/requirements.txt -t /tmp/qxf2-lambdas/${var.github_repo_name}/
+    pip3 install -r ${var.temp_path}/${var.foldername}/${var.github_repo_name}/requirements.txt -t ${var.temp_path}/${var.foldername}/${var.github_repo_name}/
   EOT
     interpreter = ["/bin/bash", "-c"]
-    working_dir = "/tmp/"
+    working_dir = var.temp_path
     environment = {
       GIT_SSH_COMMAND = "ssh -o StrictHostKeyChecking=no"
     }
@@ -18,8 +18,8 @@ resource "null_resource" "aws_lambda_repo_clone" {
 data "archive_file" "zip" {
   depends_on  = [null_resource.aws_lambda_repo_clone]
   type        = "zip"
-  source_dir  = "/tmp/qxf2-lambdas/${var.github_repo_name}"
-  output_path = "/tmp/lambda_code.zip"
+  source_dir  = "${var.temp_path}/${var.foldername}/${var.github_repo_name}"
+  output_path = "${var.temp_path}/${var.zipfilename}"
 }
 # lambda layer version attaching to lambda function
 resource "aws_lambda_layer_version" "lambda_layer" {
@@ -39,7 +39,7 @@ resource "aws_lambda_function" "newsletter_lambda" {
     target_arn = aws_sqs_queue.newsletter_sqs.arn
   }
   reserved_concurrent_executions = 100 # Adding concurrency limits can prevent a rapid spike in usage and costs
-  filename                       = "/tmp/lambda_code.zip"
+  filename                       = "${var.temp_path}/${var.zipfilename}"
   role                           = aws_iam_role.lambda_role.arn
   layers                         = [aws_lambda_layer_version.lambda_layer.arn]
   environment {
