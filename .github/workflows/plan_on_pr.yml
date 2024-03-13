@@ -26,6 +26,9 @@ jobs:
         shell: bash
 
     steps:
+    - name: create temp directory
+      run: mkdir -p temp
+    
     - name: Configure aws credentials
       uses: aws-actions/configure-aws-credentials@v3
       with:
