@@ -18,7 +18,7 @@ variable "keyname" {
 }
 # Modify default value as per your requirement
 variable "profile" {
-  default = "personal"
+  //default = "personal"
   type    = string
 
 }
