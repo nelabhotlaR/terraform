@@ -12,7 +12,7 @@ terraform {
 # Define the AWS provider
 provider "aws" {
   region  = var.region # Replace with your desired region
-  //profile = var.profile
+  profile = var.profile
 }
 
 provider "archive" {
