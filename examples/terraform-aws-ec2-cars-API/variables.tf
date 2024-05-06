@@ -4,7 +4,7 @@ variable "aws_region" {
 }
 
 variable "profile" {
-  default = "personal"
+  default = "qxf2-01"
   type    = string
 }
 
@@ -25,7 +25,7 @@ variable "aws_az" {
 
 variable "key_name" {
   description = "The EC2 Key Pair name"
-  default = "carsapi_terraform"
+  default = "carsapi-key-pair"
   type        = string
 }
 

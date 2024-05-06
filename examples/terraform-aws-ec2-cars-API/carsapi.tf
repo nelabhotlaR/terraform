@@ -89,9 +89,9 @@ resource "aws_instance" "carsapp_server" {
     sudo nginx -t
     sudo systemctl reload nginx
     # Configure certbot for SSL/TLS certificate installation
-    sudo certbot --nginx --non-interactive --agree-tos -m mak@qxf2.com --domains carsapi.com --redirect
+    sudo certbot --nginx --non-interactive --agree-tos -m mak@qxf2.com -d cars-app.qxf2.com -d www.cars-app.qxf2.com --redirect
   EOF
-
+  
   tags = {
     Name = "carsapi"
   }
@@ -127,5 +127,3 @@ provisioner "local-exec" {
 }
 depends_on = [ aws_key_pair.deployer ]
 }
-
-# https://stackoverflow.com/questions/62355066/gunicorn-listening-to-sock-file-that-doesnt-exist
