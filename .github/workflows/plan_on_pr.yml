@@ -1,0 +1,70 @@
+name: 'Deploy Newsletter-automation Terraform'
+
+on:
+  push:
+    branches: "**"
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: read
+env:
+  # verbosity setting for Terraform logs
+ TF_LOG: INFO
+ API_KEY_VALUE: ${{ secrets.API_KEY_VALUE }}
+ CHATGPT_API_KEY: ${{ secrets.CHATGPT_API_KEY }}
+ ETC_CHANNEL: ${{ secrets.ETC_CHANNEL }}
+ QXF2BOT_USER:  ${{ secrets.QXF2BOT_USER }}
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    environment: development
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - name: create temp directory
+      run: mkdir -p temp
+    
+    - name: Configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        role-to-assume: arn:aws:iam::120666943157:role/github_workflow_terraform
+        aws-region: us-east-1
+
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.6
+
+    - name: comingout from .github
+      run: cd ..
+
+    - uses: dorny/paths-filter@v2
+      id: changes
+      with:
+          filters: |
+            src:
+              - 'examples/terraform-aws-ec2-docker-image/**'
+  
+    - name: Terraform Init
+      if: steps.changes.outputs.src=='true'
+      run: cd examples/terraform-aws-ec2-docker-image && terraform init
+    
+    - name: Terraform Validate
+      if: steps.changes.outputs.src=='true'
+      run: cd examples/terraform-aws-ec2-docker-image && terraform validate -no-color
+    - name: Terraform Plan
+      if: steps.changes.outputs.src=='true'
+      run: cd examples/terraform-aws-ec2-docker-image && terraform plan -input=false
+
+      # On push to "main", deploy the Terraform infrastructure
+    - name: Terraform Apply
+      if: steps.changes.outputs.src=='true' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: cd examples/terraform-aws-ec2-docker-image && terraform apply -auto-approve -input=false

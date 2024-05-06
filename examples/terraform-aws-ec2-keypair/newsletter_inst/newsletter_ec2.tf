@@ -1,26 +1,13 @@
-# To generate secure key pair for ec2 instance
-resource "tls_private_key" "newsletter_key" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
+module "key" {
+  source = "../key-name"
+} 
 
-resource "aws_key_pair" "newsletter_generated_key" {
-  key_name    = var.keyname
-  public_key  = tls_private_key.newsletter_key.public_key_openssh
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      echo '${tls_private_key.newsletter_key.private_key_pem}' > "${var.temp_path}/${var.keyname}.pem"
-      chmod 400 "${var.temp_path}/${var.keyname}.pem"
-    EOT
-  }
-}
 
 # Create an EC2 instance with volume size 30gb. 
 resource "aws_instance" "newsletter_instance" {
   ami                    = data.aws_ami.ubuntu.id # AMI ID
   instance_type          = var.newsletter_ec2_inst_type
-  key_name                 = aws_key_pair.newsletter_generated_key.key_name
+  key_name               = module.key.keyname
   vpc_security_group_ids = [local.security_groups.sg_ping]
   ebs_optimized          = true # Ensuring that EC2 instances are EBS-optimized will help to deliver enhanced performance for EBS workloads
   monitoring             = true # Insights about the performance and utilization of your instances
@@ -37,7 +24,7 @@ resource "aws_instance" "newsletter_instance" {
     connection {
       host        = aws_instance.newsletter_instance.public_ip
       user        = "${var.remoteuser}"
-      private_key = file("${var.temp_path}/${var.keyname}.pem")
+      private_key = file("${var.temp_path}/${var.key_name}.pem")
     }
     inline = [
       "sudo apt-get update -y",
@@ -56,7 +43,7 @@ resource "aws_instance" "newsletter_instance" {
     connection {
       host        = aws_instance.newsletter_instance.public_ip
       user        = "${var.remoteuser}"
-      private_key = file("${var.temp_path}/${var.keyname}.pem")
+      private_key = file("${var.temp_path}/${var.key_name}.pem")
     }
     inline = [
       # clone the repo
@@ -72,7 +59,7 @@ resource "aws_instance" "newsletter_instance" {
     connection {
       host        = aws_instance.newsletter_instance.public_ip
       user        = "${var.remoteuser}"
-      private_key = file("${var.temp_path}/${var.keyname}.pem")
+      private_key = file("${var.temp_path}/${var.key_name}.pem")
     }
     inline = [
       # nginx installation
@@ -87,11 +74,11 @@ resource "aws_instance" "newsletter_instance" {
     ]
   }
 }
-
+/*
 # deleting the private key when terminating the instance.
 resource "null_resource" "delete_key" {
   triggers = {
-    key_path = "${var.temp_path}/${var.keyname}.pem"
+    key_path = "${var.temp_path}/${var.key_name}.pem"
     }
 provisioner "local-exec" {
   when = destroy
@@ -121,4 +108,6 @@ provisioner "local-exec" {
   command = "rm -f ${self.triggers.key_path}"
   on_failure = continue
 }
-}
+}*/
+
+# https://stackoverflow.com/questions/54303821/how-to-reference-a-resource-created-in-one-file-in-another-file-in-terraform
