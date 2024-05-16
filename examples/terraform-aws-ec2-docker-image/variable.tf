@@ -91,11 +91,12 @@ variable "lambda_layer_name" {
   type    = string
   default = "urlfilter-layer"
 }
-
+/*
 locals {
   function_source_dir    = "/tmp/qxf2-lambdas/URLFilteringLambdaRohini/"
   requirements_directory = "/tmp/qxf2-lambdas/URLFilteringLambdaRohini/"
-}
+}*/
+
 # ChatGPT related variables
 variable "CHATGPT_API_KEY" {
   type    = string
