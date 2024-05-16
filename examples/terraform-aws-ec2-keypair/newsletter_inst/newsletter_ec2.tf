@@ -1,5 +1,6 @@
 module "key" {
   source = "../key-name"
+  version = "value"
 } 
 
 
