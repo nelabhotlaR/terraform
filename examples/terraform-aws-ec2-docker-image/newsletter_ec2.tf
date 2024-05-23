@@ -51,7 +51,8 @@ resource "aws_instance" "newsletter_instance" {
       "sudo usermod -aG docker ${var.remoteuser}"
     ]
   }
-  # to prepare the docker image from newsletter_automation clone and run the docker image
+  # to prepare the docker image from Github repo 
+  # newsletter_automation. Clone and run the docker image
   provisioner "remote-exec" {
     connection {
       host        = aws_instance.newsletter_instance.public_ip
@@ -67,7 +68,7 @@ resource "aws_instance" "newsletter_instance" {
       "sudo docker run -it -d -p 5000:5000 newsletter_automation"
     ]
   }
-  # to serve newsletter app nginx download and configuration
+  # to serve newsletter app for nginx download and configuration
   provisioner "remote-exec" {
     connection {
       host        = aws_instance.newsletter_instance.public_ip

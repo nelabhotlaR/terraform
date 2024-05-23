@@ -1,5 +1,6 @@
 
-# lambda repo clone. 
+# Clones the GitHub repository and installs dependencies using pip
+# in the specified directory, choosing pip3 if available. 
 resource "null_resource" "aws_lambda_repo_clone" {
   provisioner "local-exec" {
     command     = <<-EOT
@@ -16,14 +17,14 @@ resource "null_resource" "aws_lambda_repo_clone" {
   }
 }
 
-# archiving the lambda using archive_file
+# Creates a ZIP archive of the cloned repository to be used for the Lambda layer
 data "archive_file" "zip" {
   depends_on  = [null_resource.aws_lambda_repo_clone]
   type        = "zip"
   source_dir  = "${var.temp_path}/${var.foldername}/${var.github_repo_name}"
   output_path = "${var.temp_path}/${var.zipfilename}"
 }
-# lambda layer version attaching to lambda function
+# Creates a new Lambda layer version from the ZIP file
 resource "aws_lambda_layer_version" "lambda_layer" {
   filename   = data.archive_file.zip.output_path
   layer_name = var.lambda_layer_name
@@ -54,7 +55,7 @@ resource "aws_lambda_function" "newsletter_lambda" {
       ETC_CHANNEL            = "${var.ETC_CHANNEL}"
       Qxf2Bot_USER           = "${var.Qxf2Bot_USER}"
       SKYPE_SENDER_QUEUE_URL = aws_sqs_queue.newsletter_sqs.url
-      URL                    = format("%s%s", var.URLprefix, aws_instance.newsletter_instance.public_ip)
+      URL                    = format("%s%s%s", var.URLprefix, aws_instance.newsletter_instance.public_ip,var.URLendpoint)
       DEFAULT_CATEGORY       = 5
     }
   }
@@ -79,6 +80,12 @@ resource "aws_iam_role" "lambda_role" {
 }
 EOF
 }
+# Attaches the AWSLambdaBasicExecutionRole policy to the 
+# Lambda IAM role for basic execution permissions
+resource "aws_iam_role_policy_attachment" "basic_execution_role_attachment" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
 
 # attaching sqs policy to lambda
 resource "aws_iam_policy" "lambda_permissions_policy" {
@@ -100,18 +107,24 @@ resource "aws_iam_policy" "lambda_permissions_policy" {
           "sqs:GetQueueAttributes",
           "sqs:ListQueueTags",
           "sqs:ListDeadLetterSourceQueues",
-          "sqs:DeleteMessageBatch",
-          "sqs:ChangeMessageVisibilityBatch",
-          "sqs:SetQueueAttributes"
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "lambda:CreateEventSourceMapping",
+          "lambda:ListEventSourceMappings",
+          "lambda:ListFunctions"
         ],
-        "Effect" : "Allow",
-        "Resource" : [
-          aws_sqs_queue.newsletter_sqs.arn
+        Effect : "Allow",
+        Resource : [
+          "${aws_sqs_queue.newsletter_sqs.arn}",
+          "${aws_sqs_queue.lambda_trigger_sqs.arn}"
         ]
       }
     ]
   })
 }
+# Attaches the custom permissions policy to the Lambda IAM role, 
+# allowing it to interact with SQS queues
 resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
   policy_arn = aws_iam_policy.lambda_permissions_policy.arn
   role       = aws_iam_role.lambda_role.name

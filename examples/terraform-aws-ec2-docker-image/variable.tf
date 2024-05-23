@@ -142,3 +142,7 @@ variable "URLprefix" {
   default = "http://"
 }
 
+variable "URLendpoint" {
+  type = string
+  default = "/api/articles" 
+}

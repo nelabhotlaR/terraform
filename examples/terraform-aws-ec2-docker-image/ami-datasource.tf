@@ -1,3 +1,5 @@
+# Retrieves the most recent Ubuntu 22.04 AMI 
+# from Canonical's repository
 data "aws_ami" "ubuntu" {
   most_recent = true
 
