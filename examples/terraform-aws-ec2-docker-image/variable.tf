@@ -109,6 +109,7 @@ variable "CHATGPT_VERSION" {
   default = "gpt-3.5-turbo"
 }
 
+# Used for API authentication
 variable "API_KEY_VALUE" {
   type    = string
   default = "test"
@@ -121,6 +122,7 @@ variable "employee_list" {
   default     = [ "Raju", "Rani", "Seetha", "Ramu", "Peter", "David", "Sundarm", "Jyothi", "Rajani", "Swapna", "Hema" ]
   sensitive = true
 }
+
 # Skype bot related variables
 variable "ChannelID" {
   type    = string
