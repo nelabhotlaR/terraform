@@ -64,8 +64,18 @@ resource "aws_instance" "newsletter_instance" {
       "cd ${var.temp_path}",
       "git clone https://github.com/qxf2/newsletter_automation.git",
       "cd newsletter_automation",
-      "docker build --tag newsletter_automation .",
-      "sudo docker run -it -d -p 5000:5000 newsletter_automation"
+      "docker build -t newsletter_automation .",
+      # Run the container with a specific name
+      "sudo docker run -it -d --name newsletter_automation -p 5000:5000 newsletter_automation",
+      # Wait for a few seconds to ensure the container is fully up
+      "sleep 15",
+      # Docker exec commands to modify the setup script
+      "docker exec newsletter_automation /bin/sh -c 'chmod +x /newsletter_setup.sh'",
+      "docker exec newsletter_automation /bin/sh -c 'sed -i \"s/^export API_KEY=.*/export API_KEY=\\\"test\\\"/\" /newsletter_setup.sh'",
+      "docker exec newsletter_automation /bin/sh -c 'cat /newsletter_setup.sh'",
+      # Stop and start the Docker container to reflect changes
+      "docker stop newsletter_automation",
+      "docker start newsletter_automation"
     ]
   }
   # to serve newsletter app for nginx download and configuration
@@ -85,21 +95,6 @@ resource "aws_instance" "newsletter_instance" {
       "sudo mv ~/nginx-config-file/nginx_config.template /etc/nginx/sites-available/default",
       "sudo nginx -t",
       "sudo systemctl restart nginx",
-    ]
-  }
-  # execute additional docker commands
-  provisioner "remote-exec" {
-    connection {
-      host        = aws_instance.newsletter_instance.public_ip
-      user        = "${var.remoteuser}"
-      private_key = file("${var.temp_path}/${var.keyname}.pem")
-    }
-    inline = [
-      "docker exec newsletter_automation /bin/sh -c 'chmod +x /newsletter_setup.sh'",
-      "docker exec newsletter_automation /bin/sh -c 'sed -i \"s/^export API_KEY=.*/export API_KEY=\\\"test\\\"/\" /newsletter_setup.sh'",
-      "docker exec newsletter_automation /bin/sh -c 'cat /newsletter_setup.sh'",
-      "docker stop newsletter_automation",
-      "docker start newsletter_automation"
     ]
   }
 }
