@@ -111,14 +111,14 @@ variable "CHATGPT_VERSION" {
 
 variable "API_KEY_VALUE" {
   type    = string
-  default = "api key value"
+  default = "test"
   sensitive = true
 }
 
 variable "employee_list" {
   description = "List of employee names"
   type        = list(string)
-  #default     = ["Raji", "Mohan", "Akkul", "Drishya", "Raghava", "Shiva", "Indira", "RohanD", "Sravanti", "Preedhi", "Ajitava", "Archana"]
+  default     = [ "Raju", "Rani", "Seetha", "Ramu", "Peter", "David", "Sundarm", "Jyothi", "Rajani", "Swapna", "Hema" ]
   sensitive = true
 }
 # Skype bot related variables
@@ -129,12 +129,12 @@ variable "ChannelID" {
 
 variable "ETC_CHANNEL" {
   type    = string
-  default = "etc channel ID"
+  default = "test@thread.skype"
 }
 
 variable "Qxf2Bot_USER" {
   type    = string
-  default = "qxf2Bot user"
+  default = "live:.cid.f7021d4f3453e575"
 }
 
 variable "URLprefix" {

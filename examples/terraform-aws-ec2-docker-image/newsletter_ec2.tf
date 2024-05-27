@@ -87,6 +87,21 @@ resource "aws_instance" "newsletter_instance" {
       "sudo systemctl restart nginx",
     ]
   }
+  # execute additional docker commands
+  provisioner "remote-exec" {
+    connection {
+      host        = aws_instance.newsletter_instance.public_ip
+      user        = "${var.remoteuser}"
+      private_key = file("${var.temp_path}/${var.keyname}.pem")
+    }
+    inline = [
+      "docker exec newsletter_automation /bin/sh -c 'chmod +x /newsletter_setup.sh'",
+      "docker exec newsletter_automation /bin/sh -c 'sed -i \"s/^export API_KEY=.*/export API_KEY=\\\"test\\\"/\" /newsletter_setup.sh'",
+      "docker exec newsletter_automation /bin/sh -c 'cat /newsletter_setup.sh'",
+      "docker stop newsletter_automation",
+      "docker start newsletter_automation"
+    ]
+  }
 }
 
 # deleting the private key when terminating the instance.
